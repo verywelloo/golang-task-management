@@ -1,7 +1,7 @@
 package request
 
 type RegisterPayload struct {
-	Id          string `json:"id"`
-	Password    string `json:"password"`
-	OldPassword string `json:"old_password"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
