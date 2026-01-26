@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
+	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,6 +23,35 @@ var port = s.GetEnv("SEVER_PORT", "5004")
 func main() {
 	// start echo
 	e := echo.New()
+
+	// for cors
+	allowOrigin := os.Getenv("ALLOW_ORIGIN")
+	if allowOrigin == "" {
+		log.Fatal("XX ALLOW_ORIGIN environment variable must be set")
+	}
+
+	// global middleware
+	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+		StackSize: 16 << 10, // stack size = บันทึกประวัติการทำงานของโค้ดก่อนที่จะพัง
+		LogErrorFunc: func(c echo.Context, err error, _ []byte) error {
+			file, line, fn := topAppFrame()
+			method := c.Request().Method
+			path := c.Request().URL.String()
+			reqID := c.Response().Header().Get(echo.HeaderXRequestID) // request id from header
+
+			c.Logger().Errorf("[PANIC] %s %s req_id=%s at %s:%d (%s): %v", method, path, reqID, file, line, fn, err)
+
+			return err
+		},
+	}))
+	e.Use(middleware.RequestID())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{allowOrigin}, // don't set *, cause cors will block download request
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Disposition"}, // allow frontend to read file name
+		AllowCredentials: true,                            // cookies, session
+	}))
 
 	// set log details
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -68,6 +100,28 @@ func main() {
 	if err := e.Shutdown(ctxShutdown); err != nil {
 		e.Logger.Fatal("Cannot shutdown, err: ", err)
 	}
+}
 
-	//e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", s.GetEnv("DB_HOST", port))))
+func topAppFrame() (file string, line int, function string) {
+	const maxDepth = 64
+	pcs := make([]uintptr, maxDepth)
+	// Skip frames: Callers, topAppFrame, LogErrorFunc wrapper, recover trampoline
+	n := runtime.Callers(4, pcs)
+	frames := runtime.CallersFrames(pcs[:n])
+
+	for {
+		// f = current, more = next
+		f, more := frames.Next()
+		fn := f.Function
+		if !strings.HasPrefix(fn, "runtime.") && !strings.HasPrefix(fn, "net/http.") &&
+			!strings.Contains(fn, "github.com/labstack/echo") {
+			return f.File, f.Line, fn
+		}
+
+		// if not more, break
+		if !more {
+			break
+		}
+	}
+	return "?", 0, "?"
 }
