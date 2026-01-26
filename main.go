@@ -31,6 +31,7 @@ func main() {
 	}
 
 	// global middleware
+	// prevent panic, make system run
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		StackSize: 16 << 10, // stack size = บันทึกประวัติการทำงานของโค้ดก่อนที่จะพัง
 		LogErrorFunc: func(c echo.Context, err error, _ []byte) error {
@@ -80,6 +81,11 @@ func main() {
 
 	// routes
 	routes.ApiRouter(e)
+
+	// initialize data
+	if err := s.InitializeData(ctx); err != nil {
+		fmt.Printf("\nfailed to initialize data, err: %v\n", err)
+	}
 
 	// start server in goroutine
 	go func() {
