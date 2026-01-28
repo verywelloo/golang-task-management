@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
+	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func Register(c echo.Context) error {
@@ -21,24 +21,25 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid request payload")
 	}
 
-	email, err := UserCollection.Find(ctx, bson.M{"email": payload.Email})
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return c.JSON(http.StatusNotFound, "email not found")
-		}
+	var user m.User
+	if err := UserCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err != nil {
 		return c.JSON(http.StatusInternalServerError, "error in finding user with email")
 	}
-	defer email.Close(ctx)
 
-	// userData := m.User{
-	// 	Email: payload.Email,
-	// Name: payload.Name,
-	// Password: ,//payload.Password,  hashing
-	// CreatedAt: time.Now(),
-	// UpdatedAt: time.Now(),
-	// }
+	if user.Name == "" {
+		insert := m.User{
+			Email:     payload.Email,
+			Name:      payload.Name,
+			Password:  payload.Password,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
 
-	// user, err := UserCollection.InsertOne(ctx, user)
+		_, err := UserCollection.InsertOne(ctx, insert)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "error in inserting user")
+		}
+	}
 
 	return c.JSON(http.StatusOK, "OK")
 }

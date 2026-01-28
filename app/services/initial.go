@@ -61,6 +61,8 @@ func InitCollection(client *mongo.Client, ctx context.Context) error {
 
 	collections := []string{
 		"projects",
+		"users",
+		"tasks",
 	}
 
 	// create collection in mongo
