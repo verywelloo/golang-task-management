@@ -85,6 +85,7 @@ func main() {
 	// initialize data
 	if err := s.InitializeData(ctx); err != nil {
 		fmt.Printf("\nfailed to initialize data, err: %v\n", err)
+		return
 	}
 
 	// start server in goroutine
@@ -97,7 +98,7 @@ func main() {
 	}()
 
 	// wait for shutdown signal
-	ctx.Done()
+	<-ctx.Done()
 	fmt.Println("!! Shutdown signal received, shutting down server...")
 
 	// gracefully shutdown down

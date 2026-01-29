@@ -18,7 +18,7 @@ var AppService *Service
 
 func InitializeData(ctx context.Context) error {
 	// set mongo connection
-	db, err := initEnvironment()
+	db, err := InitEnvironment()
 	if err != nil {
 		fmt.Printf("\n%v\n", err)
 		return err
@@ -36,7 +36,7 @@ func InitializeData(ctx context.Context) error {
 	return nil
 }
 
-func initEnvironment() (*mongo.Client, error) {
+func InitEnvironment() (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -78,4 +78,9 @@ func InitCollection(client *mongo.Client, ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func GetDatabaseCollection(client *mongo.Client, databaseName string, collectionName string) *mongo.Collection {
+	collection := client.Database(databaseName).Collection(collectionName)
+	return collection
 }
