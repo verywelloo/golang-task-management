@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
+	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -16,13 +17,15 @@ func Register(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	userCollection := s.AppInstance.Collections.Users
+
 	var payload req.RegisterPayload
 	if err := c.Bind(&payload); err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid request payload")
 	}
 
 	var user m.User
-	if err := UserCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err != nil {
+	if err := userCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err != nil {
 		return c.JSON(http.StatusInternalServerError, "error in finding user with email")
 	}
 
@@ -35,7 +38,7 @@ func Register(c echo.Context) error {
 			UpdatedAt: time.Now(),
 		}
 
-		_, err := UserCollection.InsertOne(ctx, insert)
+		_, err := userCollection.InsertOne(ctx, insert)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "error in inserting user")
 		}

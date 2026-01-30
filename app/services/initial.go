@@ -14,7 +14,18 @@ type Service struct {
 	ShutdownCtx context.Context
 }
 
+type Collections struct {
+	Users    *mongo.Collection
+	Projects *mongo.Collection
+}
+
+type App struct {
+	DB          *mongo.Client
+	Collections *Collections
+}
+
 var AppService *Service
+var AppInstance *App
 
 func InitializeData(ctx context.Context) error {
 	// set mongo connection
@@ -32,6 +43,10 @@ func InitializeData(ctx context.Context) error {
 
 	AppService = &Service{
 		ShutdownCtx: ctx,
+	}
+	AppInstance = &App{
+		DB:          db,
+		Collections: NewCollections(db),
 	}
 	return nil
 }
@@ -83,4 +98,13 @@ func InitCollection(client *mongo.Client, ctx context.Context) error {
 func GetDatabaseCollection(client *mongo.Client, databaseName string, collectionName string) *mongo.Collection {
 	collection := client.Database(databaseName).Collection(collectionName)
 	return collection
+}
+
+func NewCollections(db *mongo.Client) *Collections {
+	database := db.Database(GetEnv("DB_NAME", ""))
+
+	return &Collections{
+		Users:    database.Collection("users"),
+		Projects: database.Collection("projects"),
+	}
 }

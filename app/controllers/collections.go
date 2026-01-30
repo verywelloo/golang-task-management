@@ -1,27 +1,27 @@
 package controllers
 
-import (
-	"log"
+// import (
+// 	"log"
 
-	s "github.com/verywelloo/3-go-echo-task-management/app/services"
-	"go.mongodb.org/mongo-driver/mongo"
-)
+// 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
+// 	"go.mongodb.org/mongo-driver/mongo"
+// )
 
-func init() {
-	var err error
-	DB, err = s.InitEnvironment()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+// func init() {
+// 	var err error
+// 	DB, err = s.InitEnvironment()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
 
-var (
-	databaseName = s.GetEnv("DB_NAME", "")
+// var (
+// 	databaseName = s.GetEnv("DB_NAME", "")
 
-	DB *mongo.Client
+// 	DB *mongo.Client
 
-	UserCollection *mongo.Collection = s.GetDatabaseCollection(DB, databaseName, "users")
-)
+// 	UserCollection *mongo.Collection = s.GetDatabaseCollection(DB, databaseName, "users")
+// )
 
 // import (
 // 	"errors"
