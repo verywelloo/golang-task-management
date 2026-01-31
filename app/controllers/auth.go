@@ -21,14 +21,16 @@ func Register(c echo.Context) error {
 
 	var payload req.RegisterPayload
 	if err := c.Bind(&payload); err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid request payload")
+		return c.JSON(http.StatusBadRequest, "invalid request payload")
 	}
 
+	// check exists email
 	var user m.User
-	if err := userCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err != nil {
-		return c.JSON(http.StatusInternalServerError, "error in finding user with email")
+	if err := userCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err == nil {
+		return c.JSON(http.StatusBadRequest, "user already exists")
 	}
 
+	// new user, create one
 	if user.Name == "" {
 		insert := m.User{
 			Email:     payload.Email,
@@ -44,5 +46,5 @@ func Register(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, "OK")
+	return c.JSON(http.StatusOK, "successfully to create a user")
 }
