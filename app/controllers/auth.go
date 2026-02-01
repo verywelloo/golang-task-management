@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"time"
+	"unicode"
 
 	"github.com/labstack/echo/v4"
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
@@ -11,6 +12,7 @@ import (
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func Register(c echo.Context) error {
@@ -24,18 +26,63 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "invalid request payload")
 	}
 
+	var hasUpper, hasLower, hasDigit, lengthCorrect bool
+	for _, char := range payload.Password {
+		switch {
+		case unicode.IsUpper(char):
+			hasUpper = true
+		case unicode.IsLower(char):
+			hasLower = true
+		case unicode.IsDigit(char):
+			hasDigit = true
+		}
+	}
+
+	if len(payload.Password) >= 8 && len(payload.Password) <= 20 {
+		lengthCorrect = true
+	}
+
+	var errStr string
+	if !hasUpper {
+		errStr = "password must have a upper case"
+	}
+
+	if !hasLower {
+		if len(errStr) > 0 {
+			errStr = errStr + " , lower case"
+		} else {
+			errStr = "password must have a lower case"
+		}
+	}
+
+	if !hasDigit {
+		if len(errStr) > 0 {
+			errStr = errStr + ", a digit"
+		} else {
+			errStr = "password must have a digit"
+		}
+	}
+
+	if !lengthCorrect {
+		errStr = errStr + "Length of password must more than 8 and cannot exceed 20"
+	}
+
 	// check exists email
 	var user m.User
 	if err := userCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err == nil {
 		return c.JSON(http.StatusBadRequest, "user already exists")
 	}
 
-	// new user, create one
+	HashPwd, err := s.HashPassword(payload.Password)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "error in hashing password")
+	}
+
 	if user.Name == "" {
 		insert := m.User{
 			Email:     payload.Email,
 			Name:      payload.Name,
-			Password:  payload.Password,
+			Password:  HashPwd,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
@@ -47,4 +94,26 @@ func Register(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, "successfully to create a user")
+}
+
+func Login(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userCollection := s.AppInstance.Collections.Users
+
+	var payload req.LoginPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, "invalid payload format")
+	}
+
+	var user m.User
+	if err := userCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.JSON(http.StatusInternalServerError, "user not found")
+		}
+		return c.JSON(http.StatusInternalServerError, "failed to find a user")
+	}
+
+	return nil
 }
