@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -22,6 +23,7 @@ type Collections struct {
 type App struct {
 	DB          *mongo.Client
 	Collections *Collections
+	Redis       *redis.Client
 }
 
 var AppService *Service
@@ -31,22 +33,32 @@ func InitializeData(ctx context.Context) error {
 	// set mongo connection
 	db, err := InitEnvironment()
 	if err != nil {
-		fmt.Printf("\n%v\n", err)
+		fmt.Printf("\n%w\n", err)
 		return err
 	}
 
 	// init collection
 	if err := InitCollection(db, ctx); err != nil {
-		fmt.Printf("\n%v\n", err)
+		fmt.Printf("\n%w\n", err)
 		return err
 	}
 
+	// connect redis
+	redis, err := connectRedis(ctx)
+	if err != nil {
+		fmt.Printf("\n%w\n", err)
+	}
+
+	// // keep for whole server
 	AppService = &Service{
 		ShutdownCtx: ctx,
 	}
+
+	// keep for setting later
 	AppInstance = &App{
 		DB:          db,
 		Collections: NewCollections(db),
+		Redis:       redis,
 	}
 	return nil
 }
@@ -107,4 +119,21 @@ func NewCollections(db *mongo.Client) *Collections {
 		Users:    database.Collection("users"),
 		Projects: database.Collection("projects"),
 	}
+}
+
+func connectRedis(ctx context.Context) (*redis.Client, error) {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s%s", GetEnv("REDIS_HOST", "localhost"), GetEnv("REDIS_PORT", "6379")),
+		Password: GetEnv("REDIS_PASSWORD", ""),
+		DB:       0,
+	})
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis ping failed: %w", err)
+	}
+
+	fmt.Printf("\nConnect to Redis ---> " + redisClient.Options().Addr + "\n")
+	return redisClient, nil
 }
