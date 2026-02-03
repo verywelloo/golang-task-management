@@ -107,6 +107,10 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "invalid payload format")
 	}
 
+	if err := c.Validate(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, "missing require parameter")
+	}
+
 	var user m.User
 	if err := userCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -115,5 +119,28 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "failed to find a user")
 	}
 
+	isPasswordCorrect, err := verifyPassword(payload.Password, user.Password)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "error to verify password")
+	}
+
+	if !isPasswordCorrect {
+		return c.JSON(http.StatusUnauthorized, "password is incorrect")
+	}
+
 	return nil
+}
+
+func verifyPassword(candidatePassword, password string) (bool, error) {
+	var isPasswordCorrect bool
+	hashPwd, err := s.HashPassword(candidatePassword)
+	if err != nil {
+		return false, err
+	}
+
+	if hashPwd == password {
+		isPasswordCorrect = true
+	}
+
+	return isPasswordCorrect, nil
 }
