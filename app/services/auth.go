@@ -100,3 +100,7 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	return privateKey, publicKey, nil
 
 }
+
+func EncodeAccessToken(ctx context.Context) error {
+	return nil
+}
