@@ -101,6 +101,9 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 
 }
 
-func EncodeAccessToken(ctx context.Context) error {
+func EncodeAccessToken(id, subject, username string, signKey *rsa.PrivateKey) (string, error) {
 	return nil
+	อ่าน
+	//https://chat.deepseek.com/a/chat/s/a4a8acb2-ef5c-4996-a2b0-466cb60ee6a8
+	//https://chatgpt.com/c/69861c79-2328-8320-aa69-bcc8eb42b2cb
 }
