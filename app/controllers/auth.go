@@ -128,6 +128,11 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, "password is incorrect")
 	}
 
+	sessionID, err := s.GenerateSessionID()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "error to generate session ID")
+	}
+
 	privateKey, _, err := s.GetRSAKeys(ctx)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "cannot get private key")

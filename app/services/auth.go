@@ -5,9 +5,14 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
@@ -102,8 +107,42 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 }
 
 func EncodeAccessToken(id, subject, username string, signKey *rsa.PrivateKey) (string, error) {
-	return nil
-	อ่าน
-	//https://chat.deepseek.com/a/chat/s/a4a8acb2-ef5c-4996-a2b0-466cb60ee6a8
-	//https://chatgpt.com/c/69861c79-2328-8320-aa69-bcc8eb42b2cb
+
+	if signKey == nil {
+		return "", errors.New("sign key is nil")
+	}
+
+	if subject == "" {
+		return "", errors.New("subject is required")
+	}
+
+	now := time.Now()
+
+	claim := &m.Claims{
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:      id,
+			Subject: subject,
+			Issuer:  "task-management",
+			// NewNumericDate convert time.Time to unix timestamp
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(8 * time.Hour)),
+			// toke for api-gateway service
+			Audience: []string{"api-gateway"},
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claim)
+
+	return token.SignedString(signKey)
+
+}
+
+func GenerateSessionID() (string, error) {
+	b := make([]byte, 32)
+
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("generate session id: %w", err)
+	}
+
+	return hex.EncodeToString(b), nil
 }
