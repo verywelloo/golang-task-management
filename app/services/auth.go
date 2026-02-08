@@ -121,14 +121,12 @@ func EncodeAccessToken(id, subject, username string, signKey *rsa.PrivateKey) (s
 	claim := &m.Claims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:      id,
-			Subject: subject,
-			Issuer:  "task-management",
-			// NewNumericDate convert time.Time to unix timestamp
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(8 * time.Hour)),
-			// toke for api-gateway service
-			Audience: []string{"api-gateway"},
+			ID:        id,
+			Subject:   subject, //user id
+			Issuer:    "task-management",
+			IssuedAt:  jwt.NewNumericDate(now),                    // NewNumericDate convert time.Time to unix timestamp
+			ExpiresAt: jwt.NewNumericDate(now.Add(8 * time.Hour)), // toke for api-gateway service
+			Audience:  []string{"api-gateway"},
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claim)
@@ -145,4 +143,15 @@ func GenerateSessionID() (string, error) {
 	}
 
 	return hex.EncodeToString(b), nil
+}
+
+func SessionKey(sessionID string) (string, error) {
+	appName := GetEnv("APP_NAME", "")
+	if appName == "" {
+		return "", errors.New("APP_NAME is require")
+	}
+
+	key := "session"
+
+	return appName + ":" + key + sessionID, nil
 }

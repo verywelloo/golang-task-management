@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 	"unicode"
@@ -136,6 +137,14 @@ func Login(c echo.Context) error {
 	privateKey, _, err := s.GetRSAKeys(ctx)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "cannot get private key")
+	}
+
+	token, err := s.EncodeAccessToken(sessionID, user.ID.Hex(), user.Name, privateKey)
+
+	sessionKey, err := s.SessionKey(sessionID)
+	if err != nil {
+		fmt.Printf("\ncannot get session key")
+		return c.JSON(http.StatusInternalServerError, "internal server error")
 	}
 
 	return nil

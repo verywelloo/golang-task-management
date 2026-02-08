@@ -134,6 +134,6 @@ func connectRedis(ctx context.Context) (*redis.Client, error) {
 		return nil, fmt.Errorf("redis ping failed: %w", err)
 	}
 
-	fmt.Printf("\nConnect to Redis ---> " + redisClient.Options().Addr + "\n")
+	fmt.Printf("\nConnect to Redis ---> %v\n", redisClient.Options().Addr)
 	return redisClient, nil
 }
