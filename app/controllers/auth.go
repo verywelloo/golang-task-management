@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
+	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
@@ -105,11 +106,19 @@ func Login(c echo.Context) error {
 
 	var payload req.LoginPayload
 	if err := c.Bind(&payload); err != nil {
-		return c.JSON(http.StatusBadRequest, "invalid payload format")
+		return c.JSON(http.StatusBadRequest, res.Result{
+			Status:  http.StatusBadRequest,
+			Message: "invalid payload format",
+			Details: err.Error(),
+		})
 	}
 
 	if err := c.Validate(&payload); err != nil {
-		return c.JSON(http.StatusBadRequest, "missing require parameter")
+		return c.JSON(http.StatusBadRequest, res.Result{
+			Status:  http.StatusBadRequest,
+			Message: "missing require parameter",
+			Details: err.Error(),
+		})
 	}
 
 	var user m.User
@@ -122,29 +131,55 @@ func Login(c echo.Context) error {
 
 	isPasswordCorrect, err := verifyPassword(payload.Password, user.Password)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "error to verify password")
+		return c.JSON(http.StatusUnauthorized, res.Result{
+			Status:  http.StatusUnauthorized,
+			Message: "error to verify password",
+			Details: err.Error(),
+		})
 	}
 
 	if !isPasswordCorrect {
-		return c.JSON(http.StatusUnauthorized, "password is incorrect")
+		return c.JSON(http.StatusUnauthorized, res.Result{
+			Status:  http.StatusUnauthorized,
+			Message: "password is incorrect",
+		})
 	}
 
 	sessionID, err := s.GenerateSessionID()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "error to generate session ID")
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "error to generate session ID",
+			Details: err.Error(),
+		})
 	}
 
 	privateKey, _, err := s.GetRSAKeys(ctx)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "cannot get private key")
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "cannot get private key",
+			Details: err.Error(),
+		})
 	}
 
 	token, err := s.EncodeAccessToken(sessionID, user.ID.Hex(), user.Name, privateKey)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to get token",
+			Details: err.Error(),
+		})
+	}
 
 	sessionKey, err := s.SessionKey(sessionID)
 	if err != nil {
 		fmt.Printf("\ncannot get session key")
-		return c.JSON(http.StatusInternalServerError, "internal server error")
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "internal server error",
+			Details: err.Error(),
+		})
 	}
 
 	return nil
