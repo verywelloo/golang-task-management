@@ -25,7 +25,11 @@ func Register(c echo.Context) error {
 
 	var payload req.RegisterPayload
 	if err := c.Bind(&payload); err != nil {
-		return c.JSON(http.StatusBadRequest, "invalid request payload")
+		return c.JSON(http.StatusBadRequest, res.Result{
+			Status:  http.StatusBadRequest,
+			Message: "invalid request payload",
+			Details: err.Error(),
+		})
 	}
 
 	var hasUpper, hasLower, hasDigit, lengthCorrect bool
@@ -72,12 +76,20 @@ func Register(c echo.Context) error {
 	// check exists email
 	var user m.User
 	if err := userCollection.FindOne(ctx, bson.M{"email": payload.Email}).Decode(&user); err == nil {
-		return c.JSON(http.StatusBadRequest, "user already exists")
+		return c.JSON(http.StatusBadRequest, res.Result{
+			Status:  http.StatusBadRequest,
+			Message: "user already exists",
+			Details: err.Error(),
+		})
 	}
 
 	HashPwd, err := s.HashPassword(payload.Password)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "error in hashing password")
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "error in hashing password",
+			Details: err.Error(),
+		})
 	}
 
 	if user.Name == "" {
@@ -91,11 +103,18 @@ func Register(c echo.Context) error {
 
 		_, err := userCollection.InsertOne(ctx, insert)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "error in inserting user")
+			return c.JSON(http.StatusInternalServerError, res.Result{
+				Status:  http.StatusInternalServerError,
+				Message: "error in inserting user",
+				Details: err.Error(),
+			})
 		}
 	}
 
-	return c.JSON(http.StatusOK, "successfully to create a user")
+	return c.JSON(http.StatusOK, res.Result{
+		Status:  http.StatusOK,
+		Message: "error in inserting user",
+	})
 }
 
 func Login(c echo.Context) error {
@@ -174,7 +193,7 @@ func Login(c echo.Context) error {
 
 	sessionKey, err := s.SessionKey(sessionID)
 	if err != nil {
-		fmt.Printf("\ncannot get session key")
+		fmt.Printf("\ncannot get session key\n")
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
 			Message: "internal server error",
