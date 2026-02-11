@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -154,4 +155,29 @@ func SessionKey(sessionID string) (string, error) {
 	key := "session"
 
 	return appName + ":" + key + sessionID, nil
+}
+
+func SetRedis(ctx context.Context, client *redis.Client, key string, v interface{}, timeout time.Duration) error {
+	if key == "" {
+		return fmt.Errorf("redis: key cannot be empty")
+	}
+
+	if timeout < 0 {
+		return fmt.Errorf("redis: timeout cannot be negative")
+	}
+
+	// marshal to json
+	j, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Errorf("redis: failed to marshal value to json: %w", err)
+	}
+
+	//set in redis
+	cmd := client.Set(ctx, key, j, timeout)
+	_, err = cmd.Result()
+	if err != nil {
+		return fmt.Errorf("redis: failed to set key %q: %w", key, err)
+	}
+
+	return nil
 }

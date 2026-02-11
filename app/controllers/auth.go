@@ -173,6 +173,24 @@ func Login(c echo.Context) error {
 		})
 	}
 
+	session := req.CacheSession{
+		ID:    user.ID.Hex(),
+		Name:  user.Name,
+		Email: user.Email,
+		Ip:    c.RealIP(),
+		Agent: c.Request().UserAgent(),
+	}
+
+	sessionKey, err := s.SessionKey(sessionID)
+	if err != nil {
+		fmt.Printf("\ncannot get session key\n")
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "internal server error",
+			Details: err.Error(),
+		})
+	}
+
 	privateKey, _, err := s.GetRSAKeys(ctx)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
@@ -190,10 +208,10 @@ func Login(c echo.Context) error {
 			Details: err.Error(),
 		})
 	}
-
-	sessionKey, err := s.SessionKey(sessionID)
+	
+	//set session in redis
+	err = s.SetRedis(ctx, s.AppInstance.Redis, sessionKey, session, time.Hour*8)
 	if err != nil {
-		fmt.Printf("\ncannot get session key\n")
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
 			Message: "internal server error",
@@ -201,7 +219,11 @@ func Login(c echo.Context) error {
 		})
 	}
 
-	return nil
+	return c.JSON(http.StatusOK, res.Result{
+		Status: http.StatusOK,
+		Message: "login successfully",
+		Details: ,
+	})
 }
 
 func verifyPassword(candidatePassword, password string) (bool, error) {
