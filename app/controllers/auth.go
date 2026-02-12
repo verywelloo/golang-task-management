@@ -79,7 +79,6 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res.Result{
 			Status:  http.StatusBadRequest,
 			Message: "user already exists",
-			Details: err.Error(),
 		})
 	}
 
@@ -208,7 +207,7 @@ func Login(c echo.Context) error {
 			Details: err.Error(),
 		})
 	}
-	
+
 	//set session in redis
 	err = s.SetRedis(ctx, s.AppInstance.Redis, sessionKey, session, time.Hour*8)
 	if err != nil {
@@ -219,10 +218,21 @@ func Login(c echo.Context) error {
 		})
 	}
 
+	profile := res.Profile{
+		SessionID: sessionID,
+		Email:     user.Email,
+		Name:      user.Name,
+	}
+
+	response := res.LoginRes{
+		Profile: profile,
+		Token:   token,
+	}
+
 	return c.JSON(http.StatusOK, res.Result{
-		Status: http.StatusOK,
+		Status:  http.StatusOK,
 		Message: "login successfully",
-		Details: ,
+		Details: response,
 	})
 }
 
