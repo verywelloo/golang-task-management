@@ -66,10 +66,10 @@ func main() {
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
 				// Latency = duration time
-				fmt.Printf("== REQ : Time : %v, URI : %v, Method : %v, Status : %v, Host : %v, Res Time : %v\n\n", v.StartTime, v.URI, v.Method, v.Status, v.Host, v.Latency)
+				fmt.Printf("== REQ == : Time : %v, URI : %v, Method : %v, Status : %v, Host : %v, Res Time : %v\n", v.StartTime, v.URI, v.Method, v.Status, v.Host, v.Latency)
 			} else {
 				// Latency = duration time
-				fmt.Printf("!! !! ERR : Time : %v, URI : %v, Method : %v, Status : %v, Host : %v, Err : %v, Res Time : %v\n\n", v.StartTime, v.Method, v.URI, v.Status, v.Host, v.Error, v.Latency)
+				fmt.Printf("!! !! ERR !! !! : Time : %v, URI : %v, Method : %v, Status : %v, Host : %v, Err : %v, Res Time : %v\n", v.StartTime, v.Method, v.URI, v.Status, v.Host, v.Error, v.Latency)
 			}
 			return nil
 		},
@@ -99,7 +99,7 @@ func main() {
 
 	// wait for shutdown signal
 	<-ctx.Done()
-	fmt.Println("!! Shutdown signal received, shutting down server...")
+	fmt.Println("!! Shutdown !! signal received, shutting down server...")
 
 	// gracefully shutdown down
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)

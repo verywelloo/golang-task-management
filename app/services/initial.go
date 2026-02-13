@@ -123,7 +123,7 @@ func NewCollections(db *mongo.Client) *Collections {
 
 func connectRedis(ctx context.Context) (*redis.Client, error) {
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s%s", GetEnv("REDIS_HOST", "localhost"), GetEnv("REDIS_PORT", "6379")),
+		Addr:     fmt.Sprintf("%s:%s", GetEnv("REDIS_HOST", "localhost"), GetEnv("REDIS_PORT", "6379")),
 		Password: GetEnv("REDIS_PASSWORD", ""),
 		DB:       0,
 	})

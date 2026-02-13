@@ -14,6 +14,7 @@ import (
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -93,6 +94,7 @@ func Register(c echo.Context) error {
 
 	if user.Name == "" {
 		insert := m.User{
+			ID:        primitive.NewObjectID(),
 			Email:     payload.Email,
 			Name:      payload.Name,
 			Password:  HashPwd,
@@ -112,7 +114,7 @@ func Register(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, res.Result{
 		Status:  http.StatusOK,
-		Message: "error in inserting user",
+		Message: "register successfully",
 	})
 }
 
