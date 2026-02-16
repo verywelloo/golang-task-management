@@ -108,7 +108,6 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 }
 
 func EncodeAccessToken(id, subject, username string, signKey *rsa.PrivateKey) (string, error) {
-
 	if signKey == nil {
 		return "", errors.New("sign key is nil")
 	}
@@ -133,7 +132,41 @@ func EncodeAccessToken(id, subject, username string, signKey *rsa.PrivateKey) (s
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claim)
 
 	return token.SignedString(signKey)
+}
 
+func LoadPublicKeyFromRedis() (*rsa.PublicKey, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	publicPEM, err := AppInstance.Redis.Get(ctx, "rsa:public").Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, errors.New("public key not found in Redis")
+		}
+		return nil, fmt.Errorf("redis error: %w", err)
+	}
+
+	// decode to byte
+	block, _ := pem.Decode([]byte(publicPEM))
+	if block == nil {
+		return nil, errors.New("invalid PEM format")
+	}
+
+	publicKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil {
+		return nil, errors.New("unsupported public key format")
+	}
+
+	return publicKey, nil
+}
+
+func DecodeAccessToken(accessToken string) (*m.Claims, error) {
+	if accessToken == "" {
+		return nil, errors.New("empty access token")
+	}
+
+	//publicKey, err := LoadPublicKeyFromRedis()
+	return nil, nil
 }
 
 func GenerateSessionID() (string, error) {
