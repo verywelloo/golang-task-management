@@ -165,7 +165,19 @@ func DecodeAccessToken(accessToken string) (*m.Claims, error) {
 		return nil, errors.New("empty access token")
 	}
 
-	//publicKey, err := LoadPublicKeyFromRedis()
+	publicKey, err := LoadPublicKeyFromRedis()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load public key: %w", err)
+	}
+
+	token, err := jwt.ParseWithClaims(accessToken, &m.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return publicKey, nil
+	})
+
 	return nil, nil
 }
 
