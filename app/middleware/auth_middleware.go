@@ -1,10 +1,13 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
+	m "github.com/verywelloo/3-go-echo-task-management/app/models"
+	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
 	"github.com/labstack/echo/v4"
 )
@@ -27,9 +30,19 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 		}
 
-		claims, err := 
+		// decode
+		accessToken := tokenParts[1]
+		claims, err := s.DecodeAccessToken(accessToken)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, res.Result{
+				Status:  http.StatusUnauthorized,
+				Message: "invalid token",
+			})
+		}
 
 		// get session from redis
+		sessionKey := fmt.Sprintf("session:%s", claims.ID)
+		var session m.CacheSession
 
 		return nil
 	}

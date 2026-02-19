@@ -178,7 +178,15 @@ func DecodeAccessToken(accessToken string) (*m.Claims, error) {
 		return publicKey, nil
 	})
 
-	return nil, nil
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	if claims, ok := token.Claims.(*m.Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("invalid token claims")
 }
 
 func GenerateSessionID() (string, error) {
