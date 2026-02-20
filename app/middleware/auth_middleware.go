@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
-	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
 	"github.com/labstack/echo/v4"
@@ -42,8 +42,19 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// get session from redis
 		sessionKey := fmt.Sprintf("session:%s", claims.ID)
-		var session m.CacheSession
+		var session req.CacheSession
+		if err := s.GetRedis(c, sessionKey, &session); err != nil {
+			return c.JSON(http.StatusUnauthorized, res.Result{
+				Status:  http.StatusUnauthorized,
+				Message: "unauthorized",
+				Details: err.Error(),
+			})
+		}
 
+		//validate session
+		if session.ID != claims.ID || session.Ip != c.RealIP() || session.Agent != c.Request().UserAgent() {
+			return c.JSON(htt)
+		}
 		return nil
 	}
 }

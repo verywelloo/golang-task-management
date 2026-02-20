@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 
 	"github.com/redis/go-redis/v9"
@@ -20,8 +21,6 @@ import (
 )
 
 func HashPassword(password string) (string, error) {
-	//get salt
-
 	// hashing. default coast = 10, more is more secure, but slower
 	passwordWithHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -33,7 +32,6 @@ func HashPassword(password string) (string, error) {
 }
 
 func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
-
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -107,12 +105,12 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 
 }
 
-func EncodeAccessToken(id, subject, username string, signKey *rsa.PrivateKey) (string, error) {
+func EncodeAccessToken(sessionID, userID, username string, signKey *rsa.PrivateKey) (string, error) {
 	if signKey == nil {
 		return "", errors.New("sign key is nil")
 	}
 
-	if subject == "" {
+	if userID == "" {
 		return "", errors.New("subject is required")
 	}
 
@@ -121,8 +119,8 @@ func EncodeAccessToken(id, subject, username string, signKey *rsa.PrivateKey) (s
 	claim := &m.Claims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        id,
-			Subject:   subject, //user id
+			ID:        sessionID,
+			Subject:   userID, //user id
 			Issuer:    "task-management",
 			IssuedAt:  jwt.NewNumericDate(now),                    // NewNumericDate convert time.Time to unix timestamp
 			ExpiresAt: jwt.NewNumericDate(now.Add(8 * time.Hour)), // toke for api-gateway service
@@ -230,6 +228,28 @@ func SetRedis(ctx context.Context, client *redis.Client, key string, v interface
 	_, err = cmd.Result()
 	if err != nil {
 		return fmt.Errorf("redis: failed to set key %q: %w", key, err)
+	}
+
+	return nil
+}
+
+func GetRedis(c echo.Context, key string, result interface{}) error {
+	if key == "" {
+		return errors.New("redis key cannot be empty")
+	}
+
+	// get data from redis
+	data, err := AppInstance.Redis.Get(c.Request().Context(), key).Bytes()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return fmt.Errorf("key %s not found", key)
+		}
+		return fmt.Errorf("failed to get key %s from redis: %w", key, err)
+	}
+
+	// unmarshal
+	if err = json.Unmarshal(data, result); err != nil {
+		return fmt.Errorf("failed to unmarshal value for key %s %w", key, err)
 	}
 
 	return nil
