@@ -1,13 +1,18 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
+	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/labstack/echo/v4"
 )
@@ -53,8 +58,39 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		//validate session
 		if session.ID != claims.ID || session.Ip != c.RealIP() || session.Agent != c.Request().UserAgent() {
-			return c.JSON(htt)
+			return c.JSON(http.StatusUnauthorized, res.Result{
+				Status:  http.StatusUnauthorized,
+				Message: "unauthorized",
+			})
 		}
-		return nil
+
+		//set authenticated context
+		request := c.Request()
+		authCtx := context.WithValue(request.Context(), "auth", claims)
+		c.SetRequest(request.WithContext(authCtx))
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		userCollection := s.AppInstance.Collections.Users
+
+		var user m.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": session.ID}).Decode(&user)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return c.JSON(http.StatusNotFound, res.Result{
+					Status:  http.StatusNotFound,
+					Message: "user not found",
+					Details: err.Error(),
+				})
+			}
+			return c.JSON(http.StatusInternalServerError, res.Result{
+				Status:  http.StatusInternalServerError,
+				Message: "failed to retrieve user",
+				Details: err.Error(),
+			})
+		}
+
+		return next(c)
 	}
 }
