@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/verywelloo/3-go-echo-task-management/app/routes"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
@@ -19,6 +20,14 @@ import (
 )
 
 var port = s.GetEnv("SEVER_PORT", "5004")
+
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
 
 func main() {
 	// start echo
@@ -74,6 +83,11 @@ func main() {
 			return nil
 		},
 	}))
+
+	// set validator
+	e.Validator = &CustomValidator{validator: validator.New()}
+
+	time.Local = time.FixedZone("Asia/Bangkok", 7*60*60) // 7hours,60minutes,60seconds
 
 	// setup gracefully shutdown context
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
