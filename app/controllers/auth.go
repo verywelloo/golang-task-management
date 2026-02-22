@@ -163,7 +163,7 @@ func Login(c echo.Context) error {
 			Status:  http.StatusUnauthorized,
 			Message: "password is incorrect",
 		})
-	}
+	}password wrong
 
 	sessionID, err := s.GenerateSessionID()
 	if err != nil {
