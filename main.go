@@ -11,23 +11,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/verywelloo/3-go-echo-task-management/app/routes"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
+	v "github.com/verywelloo/3-go-echo-task-management/app/validators"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 var port = s.GetEnv("SEVER_PORT", "5004")
-
-type CustomValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *CustomValidator) Validate(i interface{}) error {
-	return cv.validator.Struct(i)
-}
 
 func main() {
 	// start echo
@@ -85,7 +77,7 @@ func main() {
 	}))
 
 	// set validator
-	e.Validator = &CustomValidator{validator: validator.New()}
+	e.Validator = v.NewCustomValidator()
 
 	time.Local = time.FixedZone("Asia/Bangkok", 7*60*60) // 7hours,60minutes,60seconds
 
