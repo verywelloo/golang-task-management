@@ -12,6 +12,7 @@ import (
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/labstack/echo/v4"
@@ -46,7 +47,16 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		// get session from redis
-		sessionKey := fmt.Sprintf("session:%s", claims.ID)
+		sessionKey, err := s.SessionKey(claims.ID)
+		if err != nil {
+			fmt.Printf("\ncannot get session key\n")
+			return c.JSON(http.StatusInternalServerError, res.Result{
+				Status:  http.StatusInternalServerError,
+				Message: "internal server error",
+				Details: err.Error(),
+			})
+		}
+
 		var session req.CacheSession
 		if err := s.GetRedis(c, sessionKey, &session); err != nil {
 			return c.JSON(http.StatusUnauthorized, res.Result{
@@ -57,7 +67,22 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		//validate session
-		if session.ID != claims.ID || session.Ip != c.RealIP() || session.Agent != c.Request().UserAgent() {
+		var errorStr string
+		var sessionErr bool
+		switch {
+		case session.ID != claims.Subject:
+			sessionErr = true
+			errorStr = "session_id"
+		case session.Ip != c.RealIP():
+			sessionErr = true
+			errorStr = "session_ip"
+		case session.Agent != c.Request().UserAgent():
+			sessionErr = true
+			errorStr = "session_agent"
+		}
+
+		if sessionErr {
+			fmt.Printf("\n\ndata not match in %v\n\n", errorStr)
 			return c.JSON(http.StatusUnauthorized, res.Result{
 				Status:  http.StatusUnauthorized,
 				Message: "unauthorized",
@@ -74,8 +99,17 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		userCollection := s.AppInstance.Collections.Users
 
+		userID, err := primitive.ObjectIDFromHex(session.ID)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, res.Result{
+				Status:  http.StatusInternalServerError,
+				Message: "invalid user_id",
+				Details: err.Error(),
+			})
+		}
+
 		var user m.User
-		err = userCollection.FindOne(ctx, bson.M{"_id": session.ID}).Decode(&user)
+		err = userCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
 				return c.JSON(http.StatusNotFound, res.Result{
