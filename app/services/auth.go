@@ -85,7 +85,7 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	}
 
 	// get public key
-	publicKeyPEM, err := AppInstance.Redis.Get(ctx, "ras:public").Bytes()
+	publicKeyPEM, err := AppInstance.Redis.Get(ctx, "rsa:public").Bytes()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -103,7 +103,6 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	}
 
 	return privateKey, publicKey, nil
-
 }
 
 func EncodeAccessToken(sessionID, userID, username string, signKey *rsa.PrivateKey) (string, error) {

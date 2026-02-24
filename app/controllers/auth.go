@@ -229,6 +229,7 @@ func Login(c echo.Context) error {
 
 	response := res.LoginRes{
 		Profile: profile,
+		Type:    "Bearer",
 		Token:   token,
 	}
 
