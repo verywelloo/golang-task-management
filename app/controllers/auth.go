@@ -12,6 +12,7 @@ import (
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
+	"golang.org/x/crypto/bcrypt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -163,7 +164,7 @@ func Login(c echo.Context) error {
 			Status:  http.StatusUnauthorized,
 			Message: "password is incorrect",
 		})
-	}password wrong
+	}
 
 	sessionID, err := s.GenerateSessionID()
 	if err != nil {
@@ -239,15 +240,13 @@ func Login(c echo.Context) error {
 }
 
 func verifyPassword(candidatePassword, password string) (bool, error) {
-	var isPasswordCorrect bool
-	hashPwd, err := s.HashPassword(candidatePassword)
+	err := bcrypt.CompareHashAndPassword([]byte(password), []byte(candidatePassword))
 	if err != nil {
-		return false, err
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return false, nil
+		}
+		return false, nil
 	}
 
-	if hashPwd == password {
-		isPasswordCorrect = true
-	}
-
-	return isPasswordCorrect, nil
+	return true, nil
 }

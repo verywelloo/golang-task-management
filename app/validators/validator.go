@@ -26,9 +26,16 @@ func NewCustomValidator() *CustomValidator {
 
 // set string password validation
 func strongPassword(fl validator.FieldLevel) bool {
-	matched, _ := regexp.MatchString(
-		`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$`,
-		fl.Field().String(),
-	)
-	return matched
+	password := fl.Field().String()
+
+	// Check each condition separately
+	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
+	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
+	hasDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
+
+	if !hasLower || !hasUpper || !hasDigit {
+		return false
+	}
+
+	return true
 }

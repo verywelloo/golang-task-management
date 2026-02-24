@@ -38,6 +38,7 @@ func GetRSAKeys(ctx context.Context) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	// get private-key PEM from redis
 	privateKeyPEM, err := AppInstance.Redis.Get(ctx, "rsa:private").Bytes()
 	if err == redis.Nil {
+
 		// not found => generate new key
 		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
