@@ -254,3 +254,11 @@ func GetRedis(c echo.Context, key string, result interface{}) error {
 
 	return nil
 }
+
+func GetSessionCache() error {
+	return nil
+}
+
+func GetAuthorizeContext() error {
+	return nil
+}
