@@ -14,6 +14,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/patcharp/golib/v2/cache"
+	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 
 	"github.com/redis/go-redis/v9"
@@ -255,10 +257,29 @@ func GetRedis(c echo.Context, key string, result interface{}) error {
 	return nil
 }
 
-func GetSessionCache() error {
+func GetSessionCache(c echo.Context) error {
+	claims, err := GetAuthorizeContext(c)
+	if err != nil {
+		return err
+	}
+
+	key := fmt.Sprintf("session:%s", claims.ID)
+	var tempCache req.CacheSession
+
 	return nil
 }
 
-func GetAuthorizeContext() error {
-	return nil
+func GetAuthorizeContext(c echo.Context) (m.Claims, error) {
+	//claims from the request context
+	var authKey = m.ContextKey{}
+	claims, ok := c.Request().Context().Value(authKey).(*m.Claims)
+	if !ok || claims == nil {
+		return m.Claims{}, errors.New("unauthorize claims")
+	}
+
+	return *claims, nil
+}
+
+func CachingCtx() *cache.Redis {
+	return &caching
 }

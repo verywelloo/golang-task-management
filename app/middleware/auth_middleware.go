@@ -90,8 +90,9 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		//set authenticated context
+		var authKey = m.ContextKey{}
 		request := c.Request()
-		authCtx := context.WithValue(request.Context(), "auth", claims)
+		authCtx := context.WithValue(request.Context(), authKey, claims)
 		c.SetRequest(request.WithContext(authCtx))
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

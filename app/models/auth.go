@@ -6,3 +6,6 @@ type Claims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
+
+// type for context key for security(avoid injected)
+type ContextKey struct{}
