@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/patcharp/golib/cache"
 	"github.com/patcharp/golib/v2/cache"
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
@@ -280,6 +281,10 @@ func GetAuthorizeContext(c echo.Context) (m.Claims, error) {
 	return *claims, nil
 }
 
-func CachingCtx() *cache.Redis {
-	return &caching
+// func CachingCtx() *cache.Redis {
+// 	return &caching
+// }
+
+func NewCache(cacheConfig cache.Config) cache.Redis {
+	return cache.NewWithCfg(cacheConfig)
 }
