@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/patcharp/golib/cache"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -136,4 +137,8 @@ func connectRedis(ctx context.Context) (*redis.Client, error) {
 
 	fmt.Printf("\nConnect to Redis ---> %v\n", redisClient.Options().Addr)
 	return redisClient, nil
+}
+
+func InitCache() {
+	cache = s.NewCache(cache.Config(configs.Caching))
 }
