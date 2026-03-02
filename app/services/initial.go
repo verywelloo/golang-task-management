@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/patcharp/golib/cache"
+	"github.com/patcharp/golib/util"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -29,6 +30,8 @@ type App struct {
 
 var AppService *Service
 var AppInstance *App
+
+var caching cache.Redis
 
 func InitializeData(ctx context.Context) error {
 	// set mongo connection
@@ -140,5 +143,11 @@ func connectRedis(ctx context.Context) (*redis.Client, error) {
 }
 
 func InitCache() {
-	cache = s.NewCache(cache.Config(configs.Caching))
+	config := cache.Config{
+		Host:     util.GetEnv("REDIS_HOST", "203.151.115.170"),
+		Port:     util.GetEnv("REDIS_PORT", "16389"),
+		Password: util.GetEnv("REDIS_PASSWORD", ""),
+		Db:       util.AtoI(util.GetEnv("REDIS_DB", "0"), 0),
+	}
+	caching = NewCache(cache.Config(config))
 }

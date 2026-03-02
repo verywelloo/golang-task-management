@@ -31,6 +31,9 @@ func main() {
 		log.Fatal("XX ALLOW_ORIGIN environment variable must be set")
 	}
 
+	// init cache
+	s.InitCache()
+
 	// global middleware
 	// prevent panic, make system run
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
