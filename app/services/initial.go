@@ -31,7 +31,7 @@ type App struct {
 var AppService *Service
 var AppInstance *App
 
-var caching cache.Redis
+var Caching cache.Redis
 
 func InitializeData(ctx context.Context) error {
 	// set mongo connection
@@ -149,5 +149,5 @@ func InitCache() {
 		Password: util.GetEnv("REDIS_PASSWORD", ""),
 		Db:       util.AtoI(util.GetEnv("REDIS_DB", "0"), 0),
 	}
-	caching = NewCache(cache.Config(config))
+	Caching = NewCache(cache.Config(config))
 }
