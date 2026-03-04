@@ -267,7 +267,7 @@ func GetSessionCache(c echo.Context) (*req.CacheSession, error) {
 
 	var session req.CacheSession
 	if err := Caching.Get(key, &session); err != nil {
-		fmt.Printf("\nget cache error -> %w\n", err)
+		fmt.Printf("\nget cache error\n")
 		return nil, err
 	}
 
@@ -285,10 +285,18 @@ func GetAuthorizeContext(c echo.Context) (m.Claims, error) {
 	return *claims, nil
 }
 
-// func CachingCtx() *cache.Redis {
-// 	return &caching
-// }
-
 func NewCache(cacheConfig cache.Config) cache.Redis {
 	return cache.NewWithCfg(cacheConfig)
+}
+
+func VerifyPassword(candidatePassword, password string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(password), []byte(candidatePassword))
+	if err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return false, nil
+		}
+		return false, nil
+	}
+
+	return true, nil
 }

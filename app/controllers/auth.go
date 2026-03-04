@@ -12,7 +12,6 @@ import (
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
-	"golang.org/x/crypto/bcrypt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -150,7 +149,7 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "failed to find a user")
 	}
 
-	isPasswordCorrect, err := verifyPassword(payload.Password, user.Password)
+	isPasswordCorrect, err := s.VerifyPassword(payload.Password, user.Password)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, res.Result{
 			Status:  http.StatusUnauthorized,
@@ -238,16 +237,4 @@ func Login(c echo.Context) error {
 		Message: "login successfully",
 		Details: response,
 	})
-}
-
-func verifyPassword(candidatePassword, password string) (bool, error) {
-	err := bcrypt.CompareHashAndPassword([]byte(password), []byte(candidatePassword))
-	if err != nil {
-		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return false, nil
-		}
-		return false, nil
-	}
-
-	return true, nil
 }
