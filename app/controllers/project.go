@@ -16,6 +16,23 @@ func CreateProject(c echo.Context) error {
 	userCollection := s.AppInstance.Collections.Users
 	ctx := c.Request().Context()
 
+	// session, err := s.GetSessionCache(c)
+	// if err != nil {
+	// 	return c.JSON(http.StatusUnauthorized, res.Result{
+	// 		Status: http.StatusUnauthorized,
+	// 		Message: "unauthorized",
+	// 		Details: err.Error(),
+	// 	})
+	// }
+	var payload req.CreateProjectPayload
+	if err := c.Bind(&payload)
+	return nil
+}
+
+func GetProject(c echo.Context) error {
+	userCollection := s.AppInstance.Collections.Users
+	ctx := c.Request().Context()
+
 	session, err := s.GetSessionCache(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, res.Result{
