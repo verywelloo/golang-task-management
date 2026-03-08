@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
 
-	//req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
+	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
@@ -25,7 +25,15 @@ func CreateProject(c echo.Context) error {
 	// 	})
 	// }
 	var payload req.CreateProjectPayload
-	if err := c.Bind(&payload)
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to parse payload",
+			Details: err.Error(),
+		})
+	}
+
+	newProject := m.Project{}
 	return nil
 }
 

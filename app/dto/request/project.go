@@ -1,5 +1,7 @@
 package request
 
 type CreateProjectPayload struct {
-	ProjectName string `json:"project_name"`
+	Name      string `json:"name"`
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
 }
