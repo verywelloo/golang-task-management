@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
@@ -14,6 +15,7 @@ import (
 
 func CreateProject(c echo.Context) error {
 	userCollection := s.AppInstance.Collections.Users
+	projectCollection := s.AppInstance.Collections.Projects
 	ctx := c.Request().Context()
 
 	// session, err := s.GetSessionCache(c)
@@ -24,6 +26,7 @@ func CreateProject(c echo.Context) error {
 	// 		Details: err.Error(),
 	// 	})
 	// }
+
 	var payload req.CreateProjectPayload
 	if err := c.Bind(&payload); err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
@@ -33,8 +36,34 @@ func CreateProject(c echo.Context) error {
 		})
 	}
 
-	newProject := m.Project{}
-	return nil
+	if payload.StartDate != "" {
+
+	}
+
+	if payload.EndDate != "" {
+
+	}
+
+	newProject := m.Project{
+		ID:   primitive.NewObjectID(),
+		Name: payload.Name,
+		//StartDate
+		//EndDate
+	}
+
+	_, err := projectCollection.InsertOne(ctx, newProject)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to create a project",
+			Details: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, res.Result{
+		Status:  http.StatusOK,
+		Message: "successfully create a project",
+	})
 }
 
 func GetProject(c echo.Context) error {
