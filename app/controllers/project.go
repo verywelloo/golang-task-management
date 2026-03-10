@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
@@ -36,22 +37,38 @@ func CreateProject(c echo.Context) error {
 		})
 	}
 
+	var startDate, endDate time.Time
+	var err error
 	if payload.StartDate != "" {
-
+		startDate, err = time.ParseInLocation("2006-01-02", payload.StartDate, time.Local)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, res.Result{
+				Status:  http.StatusInternalServerError,
+				Message: "failed to parse a start date",
+				Details: err.Error(),
+			})
+		}
 	}
 
 	if payload.EndDate != "" {
-
+		endDate, err = time.ParseInLocation("2006-01-02", payload.EndDate, time.Local)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, res.Result{
+				Status:  http.StatusInternalServerError,
+				Message: "failed to parse a end date",
+				Details: err.Error(),
+			})
+		}
 	}
 
 	newProject := m.Project{
-		ID:   primitive.NewObjectID(),
-		Name: payload.Name,
-		//StartDate
-		//EndDate
+		ID:        primitive.NewObjectID(),
+		Name:      payload.Name,
+		StartDate: startDate,
+		EndDate:   endDate,
 	}
 
-	_, err := projectCollection.InsertOne(ctx, newProject)
+	_, err = projectCollection.InsertOne(ctx, newProject)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
