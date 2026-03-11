@@ -15,7 +15,7 @@ import (
 )
 
 func CreateProject(c echo.Context) error {
-	userCollection := s.AppInstance.Collections.Users
+	//userCollection := s.AppInstance.Collections.Users
 	projectCollection := s.AppInstance.Collections.Projects
 	ctx := c.Request().Context()
 
@@ -108,5 +108,9 @@ func GetProject(c echo.Context) error {
 		})
 	}
 
-	return nil
+	return c.JSON(http.StatusOK, res.Result{
+		Status:  http.StatusOK,
+		Message: "successfully getting projects",
+		//Details:
+	})
 }
