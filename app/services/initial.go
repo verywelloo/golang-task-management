@@ -18,8 +18,9 @@ type Service struct {
 }
 
 type Collections struct {
-	Users    *mongo.Collection
-	Projects *mongo.Collection
+	Users             *mongo.Collection
+	Projects          *mongo.Collection
+	ProjectPermission *mongo.Collection
 }
 
 type App struct {
@@ -120,8 +121,9 @@ func NewCollections(db *mongo.Client) *Collections {
 	database := db.Database(GetEnv("DB_NAME", ""))
 
 	return &Collections{
-		Users:    database.Collection("users"),
-		Projects: database.Collection("projects"),
+		Users:             database.Collection("users"),
+		Projects:          database.Collection("projects"),
+		ProjectPermission: database.Collection("project_permissions"),
 	}
 }
 

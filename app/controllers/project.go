@@ -15,18 +15,27 @@ import (
 )
 
 func CreateProject(c echo.Context) error {
-	//userCollection := s.AppInstance.Collections.Users
 	projectCollection := s.AppInstance.Collections.Projects
+	projectPermissionCollection := s.AppInstance.Collections.ProjectPermission
 	ctx := c.Request().Context()
 
-	// session, err := s.GetSessionCache(c)
-	// if err != nil {
-	// 	return c.JSON(http.StatusUnauthorized, res.Result{
-	// 		Status: http.StatusUnauthorized,
-	// 		Message: "unauthorized",
-	// 		Details: err.Error(),
-	// 	})
-	// }
+	session, err := s.GetSessionCache(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, res.Result{
+			Status:  http.StatusUnauthorized,
+			Message: "unauthorized",
+			Details: err.Error(),
+		})
+	}
+
+	userID, err := primitive.ObjectIDFromHex(session.UserID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "invalid objectID",
+			Details: err.Error(),
+		})
+	}
 
 	var payload req.CreateProjectPayload
 	if err := c.Bind(&payload); err != nil {
@@ -38,7 +47,6 @@ func CreateProject(c echo.Context) error {
 	}
 
 	var startDate, endDate time.Time
-	var err error
 	if payload.StartDate != "" {
 		startDate, err = time.ParseInLocation("2006-01-02", payload.StartDate, time.Local)
 		if err != nil {
@@ -68,11 +76,26 @@ func CreateProject(c echo.Context) error {
 		EndDate:   endDate,
 	}
 
-	_, err = projectCollection.InsertOne(ctx, newProject)
+	result, err := projectCollection.InsertOne(ctx, newProject)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
 			Message: "failed to create a project",
+			Details: err.Error(),
+		})
+	}
+
+	// create permission
+	projectPer := m.ProjectPermission{
+		ID:        primitive.NewObjectID(),
+		ProjectID: result.InsertedID.(primitive.ObjectID),
+		UserID:    userID,
+	}
+	_, err = projectPermissionCollection.InsertOne(ctx, projectPer)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "filed to create a project-permission",
 			Details: err.Error(),
 		})
 	}
@@ -98,7 +121,7 @@ func GetProject(c echo.Context) error {
 
 	var projectPermission m.ProjectPermission
 	if err := userCollection.FindOne(ctx, bson.M{
-		"user_id":    session.ID,
+		"user_id":    session.UserID,
 		"deleted_at": nil,
 	}).Decode(&projectPermission); err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{

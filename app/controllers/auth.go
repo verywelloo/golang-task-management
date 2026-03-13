@@ -175,11 +175,11 @@ func Login(c echo.Context) error {
 	}
 
 	session := req.CacheSession{
-		ID:    user.ID.Hex(),
-		Name:  user.Name,
-		Email: user.Email,
-		Ip:    c.RealIP(),
-		Agent: c.Request().UserAgent(),
+		UserID: user.ID.Hex(),
+		Name:   user.Name,
+		Email:  user.Email,
+		Ip:     c.RealIP(),
+		Agent:  c.Request().UserAgent(),
 	}
 
 	sessionKey, err := s.SessionKey(sessionID)

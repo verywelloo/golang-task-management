@@ -12,9 +12,9 @@ type LoginPayload struct {
 }
 
 type CacheSession struct {
-	ID    string `json:"_id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Ip    string `json:"ip"`
-	Agent string `json:"agent"`
+	UserID string `json:"user_id"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Ip     string `json:"ip"`
+	Agent  string `json:"agent"`
 }
