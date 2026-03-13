@@ -14,9 +14,13 @@ import (
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 )
 
+var (
+	projectCollection           = s.AppInstance.Collections.Projects
+	projectPermissionCollection = s.AppInstance.Collections.ProjectPermission
+	userCollection              = s.AppInstance.Collections.Users
+)
+
 func CreateProject(c echo.Context) error {
-	projectCollection := s.AppInstance.Collections.Projects
-	projectPermissionCollection := s.AppInstance.Collections.ProjectPermission
 	ctx := c.Request().Context()
 
 	session, err := s.GetSessionCache(c)
@@ -107,7 +111,6 @@ func CreateProject(c echo.Context) error {
 }
 
 func GetProject(c echo.Context) error {
-	userCollection := s.AppInstance.Collections.Users
 	ctx := c.Request().Context()
 
 	session, err := s.GetSessionCache(c)
