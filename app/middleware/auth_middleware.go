@@ -70,7 +70,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		var errorStr string
 		var sessionErr bool
 		switch {
-		case session.ID != claims.Subject:
+		case session.UserID != claims.Subject:
 			sessionErr = true
 			errorStr = "session_id"
 		case session.Ip != c.RealIP():
@@ -100,7 +100,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		userCollection := s.AppInstance.Collections.Users
 
-		userID, err := primitive.ObjectIDFromHex(session.ID)
+		userID, err := primitive.ObjectIDFromHex(session.UserID)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, res.Result{
 				Status:  http.StatusInternalServerError,

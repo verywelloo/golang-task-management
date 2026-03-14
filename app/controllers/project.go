@@ -94,7 +94,10 @@ func CreateProject(c echo.Context) error {
 		ID:        primitive.NewObjectID(),
 		ProjectID: result.InsertedID.(primitive.ObjectID),
 		UserID:    userID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
+
 	_, err = projectPermissionCollection.InsertOne(ctx, projectPer)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
@@ -122,14 +125,41 @@ func GetProject(c echo.Context) error {
 		})
 	}
 
-	var projectPermission m.ProjectPermission
-	if err := userCollection.FindOne(ctx, bson.M{
+	cur, err := userCollection.Find(ctx, bson.M{
 		"user_id":    session.UserID,
 		"deleted_at": nil,
-	}).Decode(&projectPermission); err != nil {
+	})
+	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
 			Message: "failed to retrieve project-permission",
+			Details: err.Error(),
+		})
+	}
+
+	var projectIDs []primitive.ObjectID
+	for cur.Next(ctx) {
+		var projectPermissions m.ProjectPermission
+		if err := cur.Decode(&projectPermissions); err != nil {
+			return c.JSON(http.StatusInternalServerError, res.Result{
+				Status:  http.StatusInternalServerError,
+				Message: "failed to decode a project-permission",
+			})
+		}
+
+		projectIDs = append(projectIDs, projectPermissions.ProjectID)
+	}
+
+	filter := bson.M{
+		"_id":        bson.M{"$in": projectIDs},
+		"deleted_at": nil,
+	}
+
+	cur, err = projectCollection.Find(ctx, filter)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to retrieve a project",
 			Details: err.Error(),
 		})
 	}
