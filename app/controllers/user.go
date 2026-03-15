@@ -16,8 +16,6 @@ func GetAllUser(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	userCollection := s.AppInstance.Collections.Users
-
 	cursor, err := userCollection.Find(ctx, bson.M{})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
