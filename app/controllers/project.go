@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	req "github.com/verywelloo/3-go-echo-task-management/app/dto/request"
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
@@ -149,7 +150,9 @@ func GetProject(c echo.Context) error {
 		"deleted_at": nil,
 	}
 
-	cur, err = projectCollection.Find(ctx, filter)
+	option := options.Find().SetSort(bson.M{"created": -1})
+
+	cur, err = projectCollection.Find(ctx, filter, option)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
@@ -157,6 +160,8 @@ func GetProject(c echo.Context) error {
 			Details: err.Error(),
 		})
 	}
+
+	//if err := cur.All(ctx, )
 
 	return c.JSON(http.StatusOK, res.Result{
 		Status:  http.StatusOK,
