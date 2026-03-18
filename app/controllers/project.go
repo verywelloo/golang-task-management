@@ -161,11 +161,18 @@ func GetProject(c echo.Context) error {
 		})
 	}
 
-	//if err := cur.All(ctx, )
+	var projects []res.Projects
+	if err := cur.All(ctx, projects); err != nil {
+		c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to decode projects",
+			Details: err.Error(),
+		})
+	}
 
 	return c.JSON(http.StatusOK, res.Result{
 		Status:  http.StatusOK,
 		Message: "successfully getting projects",
-		//Details:
+		Details: projects,
 	})
 }

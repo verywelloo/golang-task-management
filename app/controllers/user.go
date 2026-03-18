@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
-	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
