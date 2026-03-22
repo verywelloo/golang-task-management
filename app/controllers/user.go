@@ -8,12 +8,15 @@ import (
 	"github.com/labstack/echo/v4"
 	res "github.com/verywelloo/3-go-echo-task-management/app/dto/response"
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
+	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func GetAllUser(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	userCollection := s.AppInstance.Collections.Users
 
 	cursor, err := userCollection.Find(ctx, bson.M{})
 	if err != nil {

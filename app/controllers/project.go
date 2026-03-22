@@ -18,6 +18,9 @@ import (
 func CreateProject(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	projectCollection := s.AppInstance.Collections.Projects
+	projectPermissionCollection := s.AppInstance.Collections.ProjectPermission
+
 	session, err := s.GetSessionCache(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, res.Result{
@@ -110,6 +113,9 @@ func CreateProject(c echo.Context) error {
 
 func GetProject(c echo.Context) error {
 	ctx := c.Request().Context()
+
+	projectCollection := s.AppInstance.Collections.Projects
+	userCollection := s.AppInstance.Collections.Users
 
 	session, err := s.GetSessionCache(c)
 	if err != nil {
