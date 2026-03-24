@@ -207,7 +207,7 @@ func SessionKey(sessionID string) (string, error) {
 
 	key := "session"
 
-	return appName + ":" + key + sessionID, nil
+	return appName + ":" + key + ":" + sessionID, nil
 }
 
 func SetRedis(ctx context.Context, client *redis.Client, key string, v interface{}, timeout time.Duration) error {
@@ -262,11 +262,14 @@ func GetSessionCache(c echo.Context) (*req.CacheSession, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	key := fmt.Sprintf("session:%s", claims.ID)
+	sessionKey, err := SessionKey(claims.ID)
+	if err != nil {
+		fmt.Printf("\ncannot get session key\n")
+		return nil, err
+	}
 
 	var session req.CacheSession
-	if err := Caching.Get(key, &session); err != nil {
+	if err := Caching.Get(sessionKey, &session); err != nil {
 		fmt.Printf("\nget cache error\n")
 		return nil, err
 	}
