@@ -115,7 +115,8 @@ func GetProject(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	projectCollection := s.AppInstance.Collections.Projects
-	userCollection := s.AppInstance.Collections.Users
+	//userCollection := s.AppInstance.Collections.Users
+	projectPermissionCollection := s.AppInstance.Collections.ProjectPermission
 
 	session, err := s.GetSessionCache(c)
 	if err != nil {
@@ -126,8 +127,17 @@ func GetProject(c echo.Context) error {
 		})
 	}
 
-	cur, err := userCollection.Find(ctx, bson.M{
-		"user_id":    session.UserID,
+	userID, err := primitive.ObjectIDFromHex(session.UserID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "invalid objectID",
+			Details: err.Error(),
+		})
+	}
+
+	cur, err := projectPermissionCollection.Find(ctx, bson.M{
+		"user_id":    userID,
 		"deleted_at": nil,
 	})
 	if err != nil {
@@ -151,6 +161,13 @@ func GetProject(c echo.Context) error {
 		projectIDs = append(projectIDs, projectPermissions.ProjectID)
 	}
 
+	if len(projectIDs) == 0 {
+		return c.JSON(http.StatusNotFound, res.Result{
+			Status:  http.StatusNotFound,
+			Message: "project not found",
+		})
+	}
+
 	filter := bson.M{
 		"_id":        bson.M{"$in": projectIDs},
 		"deleted_at": nil,
@@ -167,18 +184,30 @@ func GetProject(c echo.Context) error {
 		})
 	}
 
-	var projects []res.Projects
-	if err := cur.All(ctx, projects); err != nil {
-		c.JSON(http.StatusInternalServerError, res.Result{
+	var projects []m.Project
+	if err := cur.All(ctx, &projects); err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
 			Message: "failed to decode projects",
 			Details: err.Error(),
 		})
 	}
 
+	var response []res.Projects
+	for _, p := range projects {
+		result := res.Projects{
+			ID:        p.ID.Hex(),
+			Name:      p.Name,
+			StartDate: p.StartDate.Format("2006-01-02"),
+			EndDate:   p.EndDate.Format("2006-01-02"),
+		}
+
+		response = append(response, result)
+	}
+
 	return c.JSON(http.StatusOK, res.Result{
 		Status:  http.StatusOK,
 		Message: "successfully getting projects",
-		Details: projects,
+		Details: response,
 	})
 }
