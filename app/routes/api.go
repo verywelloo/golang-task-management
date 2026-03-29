@@ -18,6 +18,9 @@ func ApiRouter(e *echo.Echo) {
 	user := v1Group.Group("/user")
 	user.GET("", api.GetAllUser)
 
+	task := v1Group.Group("/task")
+	task.POST("/:project_id", api.CreateTask)
+
 	project := v1Group.Group("/project", mid.AuthMiddleware)
 	project.POST("", api.CreateProject)
 	project.GET("", api.GetProject)

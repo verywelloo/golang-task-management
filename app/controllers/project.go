@@ -19,7 +19,7 @@ func CreateProject(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	projectCollection := s.AppInstance.Collections.Projects
-	projectPermissionCollection := s.AppInstance.Collections.ProjectPermission
+	projectPermissionCollection := s.AppInstance.Collections.ProjectPermissions
 
 	session, err := s.GetSessionCache(c)
 	if err != nil {
@@ -116,7 +116,7 @@ func GetProject(c echo.Context) error {
 
 	projectCollection := s.AppInstance.Collections.Projects
 	//userCollection := s.AppInstance.Collections.Users
-	projectPermissionCollection := s.AppInstance.Collections.ProjectPermission
+	projectPermissionCollection := s.AppInstance.Collections.ProjectPermissions
 
 	session, err := s.GetSessionCache(c)
 	if err != nil {

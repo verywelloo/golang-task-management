@@ -18,9 +18,10 @@ type Service struct {
 }
 
 type Collections struct {
-	Users             *mongo.Collection
-	Projects          *mongo.Collection
-	ProjectPermission *mongo.Collection
+	Users              *mongo.Collection
+	Projects           *mongo.Collection
+	ProjectPermissions *mongo.Collection
+	Tasks              *mongo.Collection
 }
 
 type App struct {
@@ -95,6 +96,7 @@ func InitCollection(client *mongo.Client, ctx context.Context) error {
 		"projects",
 		"users",
 		"tasks",
+		"project_permissions",
 	}
 
 	// create collection in mongo
@@ -121,9 +123,10 @@ func NewCollections(db *mongo.Client) *Collections {
 	database := db.Database(GetEnv("DB_NAME", ""))
 
 	return &Collections{
-		Users:             database.Collection("users"),
-		Projects:          database.Collection("projects"),
-		ProjectPermission: database.Collection("project_permissions"),
+		Users:              database.Collection("users"),
+		Projects:           database.Collection("projects"),
+		ProjectPermissions: database.Collection("project_permissions"),
+		Tasks:              database.Collection("tasks"),
 	}
 }
 
