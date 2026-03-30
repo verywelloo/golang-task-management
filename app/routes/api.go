@@ -15,11 +15,11 @@ func ApiRouter(e *echo.Echo) {
 	auth.POST("/register", api.Register)
 	auth.POST("/login", api.Login)
 
-	user := v1Group.Group("/user")
+	user := v1Group.Group("/user", mid.AuthMiddleware)
 	user.GET("", api.GetAllUser)
 
-	task := v1Group.Group("/task")
-	task.POST("/:project_id", api.CreateTask)
+	task := v1Group.Group("/task", mid.AuthMiddleware)
+	task.POST("", api.CreateTask)
 
 	project := v1Group.Group("/project", mid.AuthMiddleware)
 	project.POST("", api.CreateProject)
