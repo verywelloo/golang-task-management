@@ -11,6 +11,7 @@ import (
 	m "github.com/verywelloo/3-go-echo-task-management/app/models"
 	s "github.com/verywelloo/3-go-echo-task-management/app/services"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -76,4 +77,24 @@ func CreateTask(c echo.Context) error {
 		Status:  http.StatusOK,
 		Message: "successfully create a task",
 	})
+}
+
+func GetTasks(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	taskCollection := s.AppInstance.Collections.Tasks
+
+	cur, err := taskCollection.Find(ctx, bson.M{})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to retrieve tasks",
+			Details: err.Error(),
+		})
+	}
+
+	var response res.GetTask
+
+	return nil
 }
