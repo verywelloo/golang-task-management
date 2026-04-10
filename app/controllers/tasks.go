@@ -13,6 +13,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func CreateTask(c echo.Context) error {
@@ -85,7 +86,24 @@ func GetTasks(c echo.Context) error {
 
 	taskCollection := s.AppInstance.Collections.Tasks
 
-	cur, err := taskCollection.Find(ctx, bson.M{})
+	projectIDStr := c.Param("project_id")
+
+	projectID, err := primitive.ObjectIDFromHex(projectIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, res.Result{
+			Status:  http.StatusBadRequest,
+			Message: "invalid project id",
+			Details: err.Error(),
+		})
+	}
+
+	taskFilter := bson.M{
+		"project_id": projectID,
+	}
+
+	option := options.Find().SetSort(bson.M{"created_at": -1})
+
+	cur, err := taskCollection.Find(ctx, taskFilter, option)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
@@ -94,7 +112,30 @@ func GetTasks(c echo.Context) error {
 		})
 	}
 
-	var response res.GetTask
+	var tasks []m.Task
+	if err := cur.All(ctx, &tasks); err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to decode tasks",
+			Details: err.Error(),
+		})
+	}
 
-	return nil
+	var response []res.GetTaskResponse
+	for _, t := range tasks {
+		result := res.GetTaskResponse{
+			ID:        t.ID.Hex(),
+			ProjectID: t.ProjectID.Hex(),
+			StartDate: t.StartDate.Format("2006-01-02"),
+			EndDate:   t.EndDate.Format("2006-01-02"),
+		}
+
+		response = append(response, result)
+	}
+
+	return c.JSON(http.StatusOK, res.Result{
+		Status:  http.StatusOK,
+		Message: "successfully get tasks",
+		Details: response,
+	})
 }
