@@ -61,9 +61,12 @@ func CreateTask(c echo.Context) error {
 
 	insert := m.Task{
 		ID:        primitive.NewObjectID(),
+		TaskName:  payload.TaskName,
 		ProjectID: projectID,
 		StartDate: startDate,
 		EndDate:   endDate,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if _, err := taskCollection.InsertOne(ctx, insert); err != nil {
@@ -125,6 +128,7 @@ func GetTasks(c echo.Context) error {
 	for _, t := range tasks {
 		result := res.GetTaskResponse{
 			ID:        t.ID.Hex(),
+			TaskName:  t.TaskName,
 			ProjectID: t.ProjectID.Hex(),
 			StartDate: t.StartDate.Format("2006-01-02"),
 			EndDate:   t.EndDate.Format("2006-01-02"),

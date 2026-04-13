@@ -20,7 +20,7 @@ func ApiRouter(e *echo.Echo) {
 
 	task := v1Group.Group("/task", mid.AuthMiddleware)
 	task.POST("", api.CreateTask)
-	task.GET("/project_id", api.GetTasks)
+	task.GET("/:project_id", api.GetTasks)
 
 	project := v1Group.Group("/project", mid.AuthMiddleware)
 	project.POST("", api.CreateProject)
