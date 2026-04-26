@@ -13,7 +13,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func CreateTask(c echo.Context) error {
@@ -59,10 +58,18 @@ func CreateTask(c echo.Context) error {
 		})
 	}
 
+	var assigneeIDs []primitive.ObjectID
+	for _, assignee := range payload.Assignee {
+		assigneeID, _ := primitive.ObjectIDFromHex(assignee)
+
+		assigneeIDs = append(assigneeIDs, assigneeID)
+	}
+
 	insert := m.Task{
 		ID:        primitive.NewObjectID(),
 		TaskName:  payload.TaskName,
 		ProjectID: projectID,
+		Assignee:  assigneeIDs,
 		StartDate: startDate,
 		EndDate:   endDate,
 		CreatedAt: time.Now(),
@@ -100,13 +107,26 @@ func GetTasks(c echo.Context) error {
 		})
 	}
 
-	taskFilter := bson.M{
-		"project_id": projectID,
+	taskFilter := []bson.M{
+		{
+			"$match": bson.M{
+				"project_id": projectID,
+			},
+		},
+
+		{"$sort": bson.M{"created_at": -1}},
+
+		// look up assignee
+
 	}
 
-	option := options.Find().SetSort(bson.M{"created_at": -1})
+	// taskFilter := bson.M{
+	// 	"project_id": projectID,
+	// }
 
-	cur, err := taskCollection.Find(ctx, taskFilter, option)
+	// option := options.Find().SetSort(bson.M{"created_at": -1})
+
+	cur, err := taskCollection.Aggregate(ctx, taskFilter)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
