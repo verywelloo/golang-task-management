@@ -49,7 +49,6 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		// get session from redis
 		sessionKey, err := s.SessionKey(claims.ID)
 		if err != nil {
-			fmt.Printf("\ncannot get session key\n")
 			return c.JSON(http.StatusInternalServerError, res.Result{
 				Status:  http.StatusInternalServerError,
 				Message: "internal server error",

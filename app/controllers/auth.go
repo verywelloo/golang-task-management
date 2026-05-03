@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 	"unicode"
@@ -184,7 +183,6 @@ func Login(c echo.Context) error {
 
 	sessionKey, err := s.SessionKey(sessionID)
 	if err != nil {
-		fmt.Printf("\ncannot get session key\n")
 		return c.JSON(http.StatusInternalServerError, res.Result{
 			Status:  http.StatusInternalServerError,
 			Message: "internal server error",

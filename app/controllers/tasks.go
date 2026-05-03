@@ -117,7 +117,37 @@ func GetTasks(c echo.Context) error {
 		{"$sort": bson.M{"created_at": -1}},
 
 		// look up assignee
-
+		{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "assignee",
+				"foreignField": "_id",
+				"as":           "assignee_details",
+			},
+		},
+		{
+			"$addFields": bson.M{
+				"assignee_details": bson.M{
+					"$map": bson.M{
+						"input": "$assignee_details",
+						"as":    "user",
+						"in": bson.M{
+							"_id":           "$$user._id",
+							"employee_id":   "$$user.employee_id",
+							"position_name": "$$user.position_name",
+							"nickname":      "$$user.nickname",
+							"full_name": bson.M{
+								"$concat": []interface{}{
+									"$$user.title_th", "",
+									"$$user.first_name_th", " ",
+									"$$user.last_name_th",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	// taskFilter := bson.M{
@@ -135,14 +165,14 @@ func GetTasks(c echo.Context) error {
 		})
 	}
 
-	var tasks []m.Task
-	if err := cur.All(ctx, &tasks); err != nil {
-		return c.JSON(http.StatusInternalServerError, res.Result{
-			Status:  http.StatusInternalServerError,
-			Message: "failed to decode tasks",
-			Details: err.Error(),
-		})
-	}
+	// var tasks []m.Task
+	// if err := cur.All(ctx, &tasks); err != nil {
+	// 	return c.JSON(http.StatusInternalServerError, res.Result{
+	// 		Status:  http.StatusInternalServerError,
+	// 		Message: "failed to decode tasks",
+	// 		Details: err.Error(),
+	// 	})
+	// }
 
 	var response []res.GetTaskResponse
 	for _, t := range tasks {

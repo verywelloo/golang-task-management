@@ -264,13 +264,11 @@ func GetSessionCache(c echo.Context) (*req.CacheSession, error) {
 	}
 	sessionKey, err := SessionKey(claims.ID)
 	if err != nil {
-		fmt.Printf("\ncannot get session key\n")
 		return nil, err
 	}
 
 	var session req.CacheSession
 	if err := Caching.Get(sessionKey, &session); err != nil {
-		fmt.Printf("\nget cache error\n")
 		return nil, err
 	}
 
