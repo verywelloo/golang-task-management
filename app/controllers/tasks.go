@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -132,29 +133,15 @@ func GetTasks(c echo.Context) error {
 						"input": "$assignee_details",
 						"as":    "user",
 						"in": bson.M{
-							"_id":           "$$user._id",
-							"employee_id":   "$$user.employee_id",
-							"position_name": "$$user.position_name",
-							"nickname":      "$$user.nickname",
-							"full_name": bson.M{
-								"$concat": []interface{}{
-									"$$user.title_th", "",
-									"$$user.first_name_th", " ",
-									"$$user.last_name_th",
-								},
-							},
+							"_id":   "$$user._id",
+							"name":  "$$user.name",
+							"email": "$$user.email",
 						},
 					},
 				},
 			},
 		},
 	}
-
-	// taskFilter := bson.M{
-	// 	"project_id": projectID,
-	// }
-
-	// option := options.Find().SetSort(bson.M{"created_at": -1})
 
 	cur, err := taskCollection.Aggregate(ctx, taskFilter)
 	if err != nil {
@@ -165,6 +152,17 @@ func GetTasks(c echo.Context) error {
 		})
 	}
 
+	var taskResult []bson.M
+	if err := cur.All(ctx, &taskResult); err != nil {
+		return c.JSON(http.StatusInternalServerError, res.Result{
+			Status:  http.StatusInternalServerError,
+			Message: "failed to decode tasks",
+			Details: err.Error(),
+		})
+	}
+
+	fmt.Printf("\n\nresult: %v\n\n", taskResult)
+
 	// var tasks []m.Task
 	// if err := cur.All(ctx, &tasks); err != nil {
 	// 	return c.JSON(http.StatusInternalServerError, res.Result{
@@ -174,22 +172,22 @@ func GetTasks(c echo.Context) error {
 	// 	})
 	// }
 
-	var response []res.GetTaskResponse
-	for _, t := range tasks {
-		result := res.GetTaskResponse{
-			ID:        t.ID.Hex(),
-			TaskName:  t.TaskName,
-			ProjectID: t.ProjectID.Hex(),
-			StartDate: t.StartDate.Format("2006-01-02"),
-			EndDate:   t.EndDate.Format("2006-01-02"),
-		}
+	// var response []res.GetTaskResponse
+	// for _, t := range tasks {
+	// 	result := res.GetTaskResponse{
+	// 		ID:        t.ID.Hex(),
+	// 		TaskName:  t.TaskName,
+	// 		ProjectID: t.ProjectID.Hex(),
+	// 		StartDate: t.StartDate.Format("2006-01-02"),
+	// 		EndDate:   t.EndDate.Format("2006-01-02"),
+	// 	}
 
-		response = append(response, result)
-	}
+	// 	response = append(response, result)
+	// }
 
 	return c.JSON(http.StatusOK, res.Result{
 		Status:  http.StatusOK,
 		Message: "successfully get tasks",
-		Details: response,
+		//Details: response,
 	})
 }
